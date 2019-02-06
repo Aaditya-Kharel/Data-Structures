@@ -1,0 +1,148 @@
+#include <iostream>
+#include <cassert>
+#include <cstdlib>
+
+
+template<class RecordType>
+table<RecordType>::table(){
+	total_records=0;
+}
+
+
+template<class RecordType>
+std::size_t table<RecordType>::hash(int key) const{
+	return (key%TABLE_SIZE);
+}
+
+
+
+template <class RecordType>
+bool table<RecordType>::is_present(int key) const{
+	std::size_t hashValue=hash(key);
+	main_savitch_6B::node<RecordType>* cursor; 
+
+	cursor=data[hashValue];
+
+	while(cursor!=NULL){
+		if(key==cursor->data().key){
+		std::cout<<"The Item is in the table "<<std::endl; 
+		return true; 
+		
+		}
+
+		cursor=cursor->link();
+	}
+	return false; 
+}
+
+
+template<class RecordType>
+void table<RecordType>::find(int key, bool& found, RecordType& result) const{
+
+	std::size_t value=hash(key);
+
+	main_savitch_6B::node<RecordType>* cursor = NULL;
+
+	cursor=data[value];
+
+	while(cursor!=NULL){
+		if(key==cursor->data().key){
+			found=true; 
+			result=cursor->data();
+			std::cout<<"The Item is in the table"<<std::endl; 
+			return; 
+		}
+
+		cursor=cursor->link(); 
+	
+	}
+	found=false; 
+	std::cout<<"The Item is not in the table"<<std::endl; 
+}
+
+
+
+template<class RecordType>
+void table<RecordType>::insert(const RecordType& entry){
+	if(total_records==TABLE_SIZE){
+		std::cout<<"The Table is full"<<std::endl;
+		return;
+	}
+
+	std::size_t value;
+	value=hash(entry.key); 
+
+	if(data[value]==NULL){
+		list_head_insert(data[value],entry);	
+	}else{
+		list_insert(data[value],entry);
+	}
+	total_records++; 
+}
+
+template<class RecordType>
+void table<RecordType>::remove(int key){
+	if(total_records==0){
+		std::cout<<"Empty Table"<<std::endl;
+		return;
+	}
+
+	main_savitch_6B::node<RecordType>* now_ptr;
+	main_savitch_6B::node<RecordType>* before_ptr;
+
+	now_ptr=data[hash(key)];
+	before_ptr=NULL; 
+
+	if(key==now_ptr->data().key){
+	list_head_remove(data[hash(key)]);
+	std::cout<<"Removed the Item"<<std::endl; 
+	--total_records; 
+	return; 
+	}
+
+	before_ptr=now_ptr; 
+	now_ptr=before_ptr->link();
+
+	while (now_ptr!=NULL){
+		if(key==now_ptr->data().key){
+			list_remove(before_ptr);
+			std::cout<<"Removed the Item"<<std::endl; 
+			--total_records;
+			return;
+		}
+		before_ptr=now_ptr; 
+		now_ptr=before_ptr->link();
+	}
+	std::cout<<"The Item is not detected"<<std::endl;
+}
+
+template<class RecordType>
+inline void table<RecordType>::operator=(const table& source){
+
+	for (int i=0; i<TABLE_SIZE; ++i){
+		list_clear(data[i]);
+	}
+
+	main_savitch_6B::node<RecordType> assign=NULL; 
+
+	for(int i=0; i<TABLE_SIZE; ++i){
+		list_copy(source.data[i],data[i],assign);
+	}
+
+	total_records=source.total_records; 
+}
+
+
+template<class RecordType>
+inline table<RecordType>::table(const table& source){
+	this=source;
+}
+
+template<class RecordType>
+table<RecordType>::~table(){
+	for(int i=0; i<TABLE_SIZE; ++i){
+		main_savitch_6B::node<RecordType>*entry=data[i];
+		list_clear(entry);
+	}
+}
+
